@@ -45,6 +45,41 @@ function authOptions(method = "GET", body) {
   };
 }
 
+function normalizePhoneNumber(value) {
+  const digits = String(value || "").replace(/\D/g, "");
+
+  if (digits.length === 11) {
+    return `${digits.slice(0, 3)}-${digits.slice(3, 7)}-${digits.slice(7)}`;
+  }
+
+  if (digits.length === 10 && digits.startsWith("02")) {
+    return `${digits.slice(0, 2)}-${digits.slice(2, 6)}-${digits.slice(6)}`;
+  }
+
+  if (digits.length === 10) {
+    return `${digits.slice(0, 3)}-${digits.slice(3, 6)}-${digits.slice(6)}`;
+  }
+
+  if (digits.length === 9 && digits.startsWith("02")) {
+    return `${digits.slice(0, 2)}-${digits.slice(2, 5)}-${digits.slice(5)}`;
+  }
+
+  return String(value || "").trim();
+}
+
+function buildInstructorPayload() {
+  const payload = serializeForm(instructorForm);
+
+  return {
+    id: payload.id?.trim() || "",
+    name: payload.name?.trim() || "",
+    specialty: payload.specialty?.trim() || "",
+    bio: payload.bio?.trim() || "",
+    phone: normalizePhoneNumber(payload.phone),
+    email: payload.email?.trim().toLowerCase() || ""
+  };
+}
+
 function setAuthenticated(isAuthenticated) {
   loginCard.hidden = isAuthenticated;
   adminApp.hidden = !isAuthenticated;
@@ -324,7 +359,7 @@ lectureForm.addEventListener("submit", async (event) => {
 instructorForm.addEventListener("submit", async (event) => {
   event.preventDefault();
   const submitButton = instructorForm.querySelector("button[type='submit']");
-  const payload = serializeForm(instructorForm);
+  const payload = buildInstructorPayload();
 
   try {
     setButtonLoading(submitButton, true, "저장 중...");

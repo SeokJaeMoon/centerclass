@@ -11,6 +11,28 @@ function normalizeNumber(value) {
   return Number.isFinite(parsed) ? parsed : NaN;
 }
 
+function normalizePhoneNumber(value) {
+  const digits = String(value || "").replace(/\D/g, "");
+
+  if (digits.length === 11) {
+    return `${digits.slice(0, 3)}-${digits.slice(3, 7)}-${digits.slice(7)}`;
+  }
+
+  if (digits.length === 10 && digits.startsWith("02")) {
+    return `${digits.slice(0, 2)}-${digits.slice(2, 6)}-${digits.slice(6)}`;
+  }
+
+  if (digits.length === 10) {
+    return `${digits.slice(0, 3)}-${digits.slice(3, 6)}-${digits.slice(6)}`;
+  }
+
+  if (digits.length === 9 && digits.startsWith("02")) {
+    return `${digits.slice(0, 2)}-${digits.slice(2, 5)}-${digits.slice(5)}`;
+  }
+
+  return String(value || "").trim();
+}
+
 export function sanitizeLectureInput(payload) {
   return {
     id: payload.id,
@@ -52,8 +74,10 @@ export function sanitizeInstructorInput(payload) {
     name: String(payload.name || "").trim(),
     specialty: String(payload.specialty || "").trim(),
     bio: String(payload.bio || "").trim(),
-    phone: String(payload.phone || "").trim(),
-    email: String(payload.email || "").trim()
+    phone: normalizePhoneNumber(payload.phone),
+    email: String(payload.email || "")
+      .trim()
+      .toLowerCase()
   };
 }
 
@@ -64,7 +88,7 @@ export function validateInstructor(payload) {
   if (!hasValue(data.name)) errors.push("강사명을 입력해주세요.");
   if (!hasValue(data.specialty)) errors.push("전문 분야를 입력해주세요.");
   if (!hasValue(data.bio)) errors.push("강사 소개를 입력해주세요.");
-  if (!/^[0-9-]{10,13}$/.test(data.phone)) errors.push("연락처는 숫자와 하이픈 형식으로 입력해주세요.");
+  if (!/^\d{2,3}-\d{3,4}-\d{4}$/.test(data.phone)) errors.push("연락처 형식을 확인해주세요.");
   if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(data.email)) errors.push("이메일 형식을 확인해주세요.");
 
   return {
