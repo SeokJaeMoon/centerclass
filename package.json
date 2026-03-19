@@ -1,0 +1,16 @@
+{
+  "name": "classreg-netlify-app",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "netlify dev",
+    "check": "node --check public/assets/api.js && node --check public/assets/student.js && node --check public/assets/admin.js && node --check netlify/functions/lectures.js && node --check netlify/functions/instructors.js && node --check netlify/functions/applications.js && node --check netlify/functions/stats.js && node --check netlify/functions/seed.js && node --check netlify/functions/admin-login.js"
+  },
+  "dependencies": {
+    "@netlify/blobs": "latest"
+  },
+  "devDependencies": {
+    "netlify-cli": "latest"
+  }
+}
