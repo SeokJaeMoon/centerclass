@@ -2,14 +2,14 @@ import { ensureSeedData, listRecords } from "./lib/stores.js";
 import { methodNotAllowed, ok } from "./lib/response.js";
 import { requireAdmin } from "./lib/auth.js";
 
-export default async function handler(request) {
+export async function handler(event) {
   await ensureSeedData();
 
-  if (request.method !== "GET") {
+  if (event.httpMethod !== "GET") {
     return methodNotAllowed(["GET"]);
   }
 
-  const unauthorized = requireAdmin(request);
+  const unauthorized = requireAdmin(event);
   if (unauthorized) return unauthorized;
 
   const [lectures, instructors, applications] = await Promise.all([

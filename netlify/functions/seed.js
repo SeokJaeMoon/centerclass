@@ -2,15 +2,15 @@ import { methodNotAllowed, ok, fail, parseRequestBody } from "./lib/response.js"
 import { requireAdmin } from "./lib/auth.js";
 import { seedSampleData } from "./lib/stores.js";
 
-export default async function handler(request) {
-  if (request.method !== "POST") {
+export async function handler(event) {
+  if (event.httpMethod !== "POST") {
     return methodNotAllowed(["POST"]);
   }
 
-  const unauthorized = requireAdmin(request);
+  const unauthorized = requireAdmin(event);
   if (unauthorized) return unauthorized;
 
-  const body = await parseRequestBody(request);
+  const body = await parseRequestBody(event);
   const force = body.force === true || body.force === "true";
   const result = await seedSampleData(force);
 

@@ -1,4 +1,5 @@
 import { fail } from "./response.js";
+import { getHeader } from "./response.js";
 
 const ADMIN_USERNAME = process.env.ADMIN_USERNAME || "admin";
 const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || "admin1234";
@@ -16,9 +17,9 @@ export function verifyAdminCredentials(username, password) {
   return username === ADMIN_USERNAME && password === ADMIN_PASSWORD;
 }
 
-export function extractAdminToken(request) {
-  const authHeader = request.headers.get("authorization");
-  const customToken = request.headers.get("x-admin-token");
+export function extractAdminToken(event) {
+  const authHeader = getHeader(event, "authorization");
+  const customToken = getHeader(event, "x-admin-token");
 
   if (authHeader?.startsWith("Bearer ")) {
     return authHeader.replace("Bearer ", "").trim();
@@ -27,12 +28,12 @@ export function extractAdminToken(request) {
   return customToken?.trim() || "";
 }
 
-export function isAdminAuthorized(request) {
-  return extractAdminToken(request) === ADMIN_TOKEN;
+export function isAdminAuthorized(event) {
+  return extractAdminToken(event) === ADMIN_TOKEN;
 }
 
-export function requireAdmin(request) {
-  if (!isAdminAuthorized(request)) {
+export function requireAdmin(event) {
+  if (!isAdminAuthorized(event)) {
     return fail("관리자 인증이 필요합니다.", 401);
   }
 

@@ -1,12 +1,12 @@
 import { getAdminConfig, verifyAdminCredentials } from "./lib/auth.js";
 import { methodNotAllowed, ok, fail, parseRequestBody } from "./lib/response.js";
 
-export default async function handler(request) {
-  if (request.method !== "POST") {
+export async function handler(event) {
+  if (event.httpMethod !== "POST") {
     return methodNotAllowed(["POST"]);
   }
 
-  const body = await parseRequestBody(request);
+  const body = await parseRequestBody(event);
   const username = String(body.username || "").trim();
   const password = String(body.password || "").trim();
 

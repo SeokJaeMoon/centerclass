@@ -4,13 +4,14 @@ const defaultHeaders = {
 };
 
 export function json(payload, status = 200, headers = {}) {
-  return new Response(JSON.stringify(payload), {
-    status,
+  return {
+    statusCode: status,
     headers: {
       ...defaultHeaders,
       ...headers
-    }
-  });
+    },
+    body: JSON.stringify(payload)
+  };
 }
 
 export function ok(data = null, message = "요청이 성공적으로 처리되었습니다.", status = 200) {
@@ -39,24 +40,55 @@ export function methodNotAllowed(allowed = []) {
   return fail(`허용되지 않은 메서드입니다. 허용 메서드: ${allowed.join(", ")}`, 405);
 }
 
-export async function parseRequestBody(request) {
-  const contentType = request.headers.get("content-type") || "";
+export function getHeader(event, headerName) {
+  const headers = event?.headers || {};
+  const direct = headers[headerName];
+
+  if (direct) return direct;
+
+  const loweredKey = Object.keys(headers).find((key) => key.toLowerCase() === headerName.toLowerCase());
+  return loweredKey ? headers[loweredKey] : "";
+}
+
+export function getQueryParam(event, key) {
+  if (event?.queryStringParameters?.[key] !== undefined) {
+    return event.queryStringParameters[key];
+  }
+
+  if (event?.rawUrl) {
+    const url = new URL(event.rawUrl);
+    return url.searchParams.get(key);
+  }
+
+  return null;
+}
+
+export async function parseRequestBody(event) {
+  const contentType = getHeader(event, "content-type") || "";
+  const rawBody = event?.body
+    ? event.isBase64Encoded
+      ? Buffer.from(event.body, "base64").toString("utf-8")
+      : event.body
+    : "";
+
+  if (!rawBody) {
+    return {};
+  }
 
   if (contentType.includes("application/json")) {
     try {
-      return await request.json();
+      return JSON.parse(rawBody);
     } catch {
       return {};
     }
   }
 
-  if (contentType.includes("application/x-www-form-urlencoded") || contentType.includes("multipart/form-data")) {
-    const formData = await request.formData();
-    return Object.fromEntries(formData.entries());
+  if (contentType.includes("application/x-www-form-urlencoded")) {
+    return Object.fromEntries(new URLSearchParams(rawBody).entries());
   }
 
   try {
-    return await request.json();
+    return JSON.parse(rawBody);
   } catch {
     return {};
   }

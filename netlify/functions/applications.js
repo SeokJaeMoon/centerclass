@@ -1,5 +1,5 @@
 import { ensureSeedData, createId, getRecord, listRecords, putRecord } from "./lib/stores.js";
-import { methodNotAllowed, ok, fail, parseRequestBody } from "./lib/response.js";
+import { getQueryParam, methodNotAllowed, ok, fail, parseRequestBody } from "./lib/response.js";
 import { requireAdmin } from "./lib/auth.js";
 import { validateApplication } from "./lib/validation.js";
 
@@ -7,16 +7,15 @@ function sortApplications(applications) {
   return [...applications].sort((a, b) => new Date(b.appliedAt).getTime() - new Date(a.appliedAt).getTime());
 }
 
-export default async function handler(request) {
+export async function handler(event) {
   await ensureSeedData();
 
-  if (request.method === "GET") {
-    const unauthorized = requireAdmin(request);
+  if (event.httpMethod === "GET") {
+    const unauthorized = requireAdmin(event);
     if (unauthorized) return unauthorized;
 
-    const url = new URL(request.url);
-    const lectureId = url.searchParams.get("lectureId");
-    const schoolLevel = url.searchParams.get("schoolLevel");
+    const lectureId = getQueryParam(event, "lectureId");
+    const schoolLevel = getQueryParam(event, "schoolLevel");
     const applications = await listRecords("applications");
 
     const filtered = applications.filter((application) => {
@@ -28,8 +27,8 @@ export default async function handler(request) {
     return ok(sortApplications(filtered), "신청 목록을 조회했습니다.");
   }
 
-  if (request.method === "POST") {
-    const body = await parseRequestBody(request);
+  if (event.httpMethod === "POST") {
+    const body = await parseRequestBody(event);
     const { data, errors } = validateApplication(body);
     if (errors.length > 0) {
       return fail("입력값을 확인해주세요.", 422, errors);

@@ -1,5 +1,5 @@
 import { ensureSeedData, createId, deleteRecord, getRecord, listRecords, putRecord } from "./lib/stores.js";
-import { methodNotAllowed, ok, fail, parseRequestBody } from "./lib/response.js";
+import { getQueryParam, methodNotAllowed, ok, fail, parseRequestBody } from "./lib/response.js";
 import { requireAdmin } from "./lib/auth.js";
 import { validateLecture } from "./lib/validation.js";
 
@@ -24,12 +24,11 @@ async function buildLectureResponse(lecture) {
   };
 }
 
-export default async function handler(request) {
+export async function handler(event) {
   await ensureSeedData();
 
-  if (request.method === "GET") {
-    const url = new URL(request.url);
-    const id = url.searchParams.get("id");
+  if (event.httpMethod === "GET") {
+    const id = getQueryParam(event, "id");
 
     if (id) {
       const lecture = await getRecord("lectures", id);
@@ -45,11 +44,11 @@ export default async function handler(request) {
     return ok(enriched, "특강 목록을 조회했습니다.");
   }
 
-  if (request.method === "POST") {
-    const unauthorized = requireAdmin(request);
+  if (event.httpMethod === "POST") {
+    const unauthorized = requireAdmin(event);
     if (unauthorized) return unauthorized;
 
-    const body = await parseRequestBody(request);
+    const body = await parseRequestBody(event);
     const { data, errors } = validateLecture(body);
     if (errors.length > 0) {
       return fail("입력값을 확인해주세요.", 422, errors);
@@ -69,11 +68,11 @@ export default async function handler(request) {
     return ok(lecture, "특강이 등록되었습니다.", 201);
   }
 
-  if (request.method === "PUT") {
-    const unauthorized = requireAdmin(request);
+  if (event.httpMethod === "PUT") {
+    const unauthorized = requireAdmin(event);
     if (unauthorized) return unauthorized;
 
-    const body = await parseRequestBody(request);
+    const body = await parseRequestBody(event);
     if (!body.id) {
       return fail("수정할 특강 ID가 필요합니다.", 400);
     }
@@ -103,13 +102,12 @@ export default async function handler(request) {
     return ok(updatedLecture, "특강이 수정되었습니다.");
   }
 
-  if (request.method === "DELETE") {
-    const unauthorized = requireAdmin(request);
+  if (event.httpMethod === "DELETE") {
+    const unauthorized = requireAdmin(event);
     if (unauthorized) return unauthorized;
 
-    const url = new URL(request.url);
-    const body = await parseRequestBody(request);
-    const id = url.searchParams.get("id") || body.id;
+    const body = await parseRequestBody(event);
+    const id = getQueryParam(event, "id") || body.id;
 
     if (!id) {
       return fail("삭제할 특강 ID가 필요합니다.", 400);
